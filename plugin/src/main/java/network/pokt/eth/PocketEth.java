@@ -12,6 +12,7 @@ import org.web3j.crypto.TransactionEncoder;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import network.pokt.pocketsdk.exceptions.CreateQueryException;
 import network.pokt.pocketsdk.exceptions.CreateTransactionException;
@@ -25,13 +26,14 @@ import network.pokt.pocketsdk.models.Transaction;
 import network.pokt.pocketsdk.models.Wallet;
 
 /**
- * Android Ethereum Plugin
+ * PocketPlugin implementation for the Ethereum Network
  */
-public class PocketEthPlugin extends PocketPlugin {
+public class PocketEth extends PocketPlugin {
 
     private final String NETWORK = "ETH";
 
-    public PocketEthPlugin(@NotNull Configuration configuration) throws InvalidConfigurationException {
+
+    public PocketEth(@NotNull Configuration configuration) throws InvalidConfigurationException {
         super(configuration);
     }
 
@@ -47,8 +49,7 @@ public class PocketEthPlugin extends PocketPlugin {
             throw new CreateWalletException(data, e.getMessage());
         }
 
-        byte[] privateKeyBytes = Keys.serialize(ecKeyPair);
-        String privateKey = new String(privateKeyBytes);
+        String privateKey = ecKeyPair.getPrivateKey().toString(16);
         String address = Keys.getAddress(ecKeyPair);
 
         try {
@@ -69,24 +70,22 @@ public class PocketEthPlugin extends PocketPlugin {
 
         // Try re-creating the wallet
         ECKeyPair ecKeyPair;
+        byte[] privateKeyBytes;
         try {
-            ecKeyPair = Keys.deserialize(privateKey.getBytes());
+            privateKeyBytes = PocketEth.hexStringToByteArray(privateKey);
+            ecKeyPair = ECKeyPair.create(privateKeyBytes);
         } catch (Exception e) {
             throw new ImportWalletException(privateKey, address, data, e.getMessage());
         }
 
-        byte[] privateKeyBytes = Keys.serialize(ecKeyPair);
-
-        if(privateKey != new String(privateKeyBytes)) {
-            throw new ImportWalletException(privateKey, address, data, "Invalid privatekey provided");
-        }
-
-        if(address != Keys.getAddress(ecKeyPair)) {
+        if(!Keys.getAddress(ecKeyPair).equals(address)) {
             throw new ImportWalletException(privateKey, address, data, "Invalid address provided");
         }
 
         try {
-            result = new Wallet(address, privateKey, this.getNetwork(), subnetwork, new JSONObject(data));
+            // Parse data
+            JSONObject walletData = data == null ? new JSONObject() : new JSONObject(data);
+            result = new Wallet(address, privateKey, this.getNetwork(), subnetwork, walletData);
         } catch (JSONException e) {
             throw new ImportWalletException(privateKey, address, data, e.getMessage());
         }
@@ -118,7 +117,8 @@ public class PocketEthPlugin extends PocketPlugin {
             value = (BigInteger) params.get("value");
             data = (String) params.get("data");
             chainId = subnetwork.getBytes()[0];
-            credentials = Credentials.create(wallet.getPrivateKey(), wallet.getAddress());
+            ECKeyPair keyPair = ECKeyPair.create(PocketEth.hexStringToByteArray(wallet.getPrivateKey()));
+            credentials = Credentials.create(keyPair);
         } catch (Exception e) {
             throw new CreateTransactionException(wallet, subnetwork, params, e.getMessage());
         }
@@ -146,8 +146,45 @@ public class PocketEthPlugin extends PocketPlugin {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public @NotNull Query createQuery(@NotNull String subnetwork, Map<String, Object> params, Map<String, Object> decoder) throws CreateQueryException {
-        return null;
+        Query result;
+
+        // Extract rpc request
+        String rpcMethod;
+        List<Object> rpcParams;
+        JSONObject queryData = new JSONObject();
+        try {
+            rpcMethod = (String) params.get("rpcMethod");
+            rpcParams = (List<Object>) params.get("rpcParams");
+            queryData.put("rpc_method", rpcMethod);
+            queryData.put("rpc_params", rpcParams);
+        } catch (Exception e) {
+            throw new CreateQueryException(subnetwork, params, decoder, e.getMessage());
+        }
+
+        // Extract decoder
+        List<String> returnTypes;
+        JSONObject queryDecoder = new JSONObject();
+        try {
+            returnTypes = (List<String>) decoder.get("returnTypes");
+            decoder.put("return_types", returnTypes);
+        } catch (Exception e) {
+            // Log message and send empty decoder
+            Logger.getGlobal().warning(e.getMessage());
+            queryDecoder = new JSONObject();
+        }
+
+        try {
+            result = new Query(this.getNetwork(), subnetwork, queryData, queryDecoder);
+        } catch (Exception e) {
+            throw new CreateQueryException(subnetwork, params, decoder, e.getMessage());
+        }
+
+        if(result == null) {
+            throw new CreateQueryException(subnetwork, params, decoder, "Unknown error creating query");
+        }
+        return result;
     }
 
     @Override
@@ -155,8 +192,13 @@ public class PocketEthPlugin extends PocketPlugin {
         return NETWORK;
     }
 
-    @Override
-    public @NotNull List<String> getSubnetworks() {
-        return null;
+    private static byte[] hexStringToByteArray(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                    + Character.digit(s.charAt(i+1), 16));
+        }
+        return data;
     }
 }

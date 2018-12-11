@@ -18,6 +18,7 @@ android {
                 cppFlags "-frtti -fexceptions"
             }
         }
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -40,5 +41,8 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'org.web3j:core:3.3.1-android'
-    implementation 'network.pokt.pocketsdk:sdk:0.0.1'
+    implementation 'com.github.pokt-network:pocket-android-sdk:0.0.1'
+    implementation 'com.android.support:multidex:1.0.3'
+    androidTestImplementation 'com.squareup.okhttp3:mockwebserver:3.11.0'
+    implementation 'com.android.support:support-core-utils'
 }
