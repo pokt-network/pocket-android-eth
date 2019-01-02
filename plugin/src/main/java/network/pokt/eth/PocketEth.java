@@ -78,7 +78,7 @@ public class PocketEth extends PocketPlugin {
             throw new ImportWalletException(privateKey, address, data, e.getMessage());
         }
 
-        if(!Keys.getAddress(ecKeyPair).equals(address)) {
+        if(!Keys.getAddress(ecKeyPair).equalsIgnoreCase(address)) {
             throw new ImportWalletException(privateKey, address, data, "Invalid address provided");
         }
 
