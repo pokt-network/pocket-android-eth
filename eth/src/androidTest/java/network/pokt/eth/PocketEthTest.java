@@ -37,7 +37,7 @@ public class PocketEthTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("network.pokt.pocket_android_eth", appContext.getPackageName());
+        assertEquals("network.pokt.eth.test", appContext.getPackageName());
     }
 
     @Test

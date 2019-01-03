@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/plugin/plugin.iml" filepath="$PROJECT_DIR$/plugin/plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/eth/eth.iml" filepath="$PROJECT_DIR$/.idea/modules/eth/eth.iml" />
       <module fileurl="file://$PROJECT_DIR$/pocket-android-eth.iml" filepath="$PROJECT_DIR$/pocket-android-eth.iml" />
     </modules>
   </component>
