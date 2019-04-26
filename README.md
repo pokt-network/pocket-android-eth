@@ -1,3 +1,6 @@
+# NOTE:
+This repository has been deprecated, please visit the [PocketAndroid repository for the latest on Pocket Android client development.](https://github.com/pokt-network/pocket-android)
+
 # Pocket Android Ethereum Plugin
 Ethereum Android Plugin to connect to any Ethereum compatible Pocket Node. 
 For more information about Pocket Node you can checkout the repo [here](https://github.com/pokt-network/pocket-node).
